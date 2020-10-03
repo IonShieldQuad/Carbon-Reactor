@@ -32,6 +32,8 @@ public class MainWindow {
     private GraphDisplay graph3;
     private GraphDisplay graph4;
 
+    private GraphDisplay[] graphs = new GraphDisplay[] {};
+
     public static final String TITLE = "Carbon-Reactor";
     
     private MainWindow() {
@@ -40,6 +42,7 @@ public class MainWindow {
     
     private void initComponents() {
         calculateButton.addActionListener(e -> calculate());
+        graphs = new GraphDisplay[] {graph0, graph1, graph2, graph3, graph4};
     }
     
     
@@ -107,71 +110,36 @@ public class MainWindow {
             result[3] = new LinearInterpolator(points3);
             result[4] = new LinearInterpolator(points4);
             
-            updateGraphs(result);
+            updateGraphs(result, 0, time);
         }
         catch (NumberFormatException e) {
             log.append("\nInvalid input format");
         }
     }
     
-    private void updateGraphs(Interpolator[] result) {
+    private void updateGraphs(Interpolator[] result, double minX, double maxX) {
         try {
-            if (result == null || result.length < 5) {
+            if (result == null || result.length < graphs.length) {
 
-                graph0.setInterpolators(new ArrayList<>());
-                graph0.repaint();
-                graph1.setInterpolators(new ArrayList<>());
-                graph1.repaint();
-                graph2.setInterpolators(new ArrayList<>());
-                graph2.repaint();
-                graph3.setInterpolators(new ArrayList<>());
-                graph3.repaint();
-                graph4.setInterpolators(new ArrayList<>());
-                graph4.repaint();
+                for (GraphDisplay graph : graphs) {
+                    graph.setInterpolators(new ArrayList<>());
+                    graph.repaint();
+                }
+
                 return;
             }
-            for (int i = 0; i < result.length; i++) {
-                if (result[i] == null) return;
+            for (Interpolator interpolator : result) {
+                if (interpolator == null) return;
             }
-            /*graphCout.setMinX(result[0].lower());
-            graphCout.setMaxX(result[0].upper());
-            graphCout.setMinY(result[0].lowerVal());
-            graphCout.setMaxY(result[0].upperVal());*/
-    
-            /*graphCin.setMinX(result[1].lower());
-            graphCin.setMaxX(result[1].upper());
-            graphCin.setMinY(result[1].lowerVal());
-            graphCin.setMaxY(result[1].upperVal());
-    
-            graphMin.setMinX(result[2].lower());
-            graphMin.setMaxX(result[2].upper());
-            graphMin.setMinY(result[2].lowerVal());
-            graphMin.setMaxY(result[2].upperVal());
-    
-            graphTp.setMinX(result[3].lower());
-            graphTp.setMaxX(result[3].upper());
-            graphTp.setMinY(result[3].lowerVal());
-            graphTp.setMaxY(result[3].upperVal());*/
-            
-            graph0.setInterpolators(Collections.singletonList(result[0]));
-            graph1.setInterpolators(Collections.singletonList(result[1]));
-            graph2.setInterpolators(Collections.singletonList(result[2]));
-            graph3.setInterpolators(Collections.singletonList(result[3]));
-            graph4.setInterpolators(Collections.singletonList(result[4]));
-            /*graphCin.setInterpolators(Collections.singletonList(result[1]));
-            graphMin.setInterpolators(Collections.singletonList(result[2]));
-            graphTp.setInterpolators(Collections.singletonList(result[3]));*/
-            
-            //graph.setInterpolatorsHighligthed(Collections.singletonList(results.get(results.size() - 1)));
-    
-            graph0.repaint();
-            graph1.repaint();
-            graph2.repaint();
-            graph3.repaint();
-            graph4.repaint();
-            /*graphCin.repaint();
-            graphMin.repaint();
-            graphTp.repaint();*/
+
+            for (int i = 0; i < graphs.length; i++) {
+                graphs[i].setInterpolators(Collections.singletonList(result[i]));
+                graphs[i].setMinX(minX);
+                graphs[i].setMaxX(maxX);
+                graphs[i].repaint();
+            }
+
+
         }
         catch (NumberFormatException e) {
             log.append("\nInvalid input format");

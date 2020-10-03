@@ -67,7 +67,7 @@ public class CarbonReactor {
         double k3 = a3 * Math.exp(-e3 / (r * t));
         double r1 = k1 * cCH4 * cO2;
         double r2 = k2 * cC3H4 * cO2;
-        double r3 = k3 = cC3H4;
+        double r3 = k3 * cC3H4;
 
         double dcCH4 = (1 / ts) * (cCH4In - cCH4) - r1;
         double dcC3H4 = (1 / ts) * (cC3H4In - cC3H4) - 2 * r2 - r3;
@@ -81,7 +81,7 @@ public class CarbonReactor {
 
         double qIn = ct * massRate * tIn;
         double qOut = ct * massRate * t;
-        double dq = qIn - qOut + q1 * r1 + q2 * r2;
+        double dq = qIn - qOut + q1 * r1 * volume + q2 * r2 * volume;
 
         cCH4 += dcCH4 * seconds;
         cC3H4 += dcC3H4 * seconds;

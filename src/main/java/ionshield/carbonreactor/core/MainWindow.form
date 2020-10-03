@@ -45,11 +45,12 @@
                       </grid>
                     </constraints>
                     <properties>
+                      <autoModeX value="false"/>
                       <boundRoundingXEnabled value="true"/>
                       <boundRoundingYEnabled value="true"/>
                       <extraAmount value="0.0"/>
-                      <gridX value="5"/>
-                      <gridY value="5"/>
+                      <gridX value="9"/>
+                      <gridY value="9"/>
                     </properties>
                   </component>
                 </children>
@@ -70,11 +71,13 @@
                       </grid>
                     </constraints>
                     <properties>
+                      <autoModeX value="false"/>
                       <boundRoundingXEnabled value="true"/>
+                      <boundRoundingY value="100.0"/>
                       <boundRoundingYEnabled value="true"/>
                       <extraAmount value="0.0"/>
-                      <gridX value="5"/>
-                      <gridY value="5"/>
+                      <gridX value="9"/>
+                      <gridY value="9"/>
                       <precision value="1"/>
                     </properties>
                   </component>
@@ -96,11 +99,12 @@
                       </grid>
                     </constraints>
                     <properties>
+                      <autoModeX value="false"/>
                       <boundRoundingXEnabled value="true"/>
                       <boundRoundingYEnabled value="true"/>
                       <extraAmount value="0.0"/>
-                      <gridX value="5"/>
-                      <gridY value="5"/>
+                      <gridX value="9"/>
+                      <gridY value="9"/>
                     </properties>
                   </component>
                 </children>
@@ -121,11 +125,12 @@
                       </grid>
                     </constraints>
                     <properties>
+                      <autoModeX value="false"/>
                       <boundRoundingXEnabled value="true"/>
                       <boundRoundingYEnabled value="true"/>
                       <extraAmount value="0.0"/>
-                      <gridX value="5"/>
-                      <gridY value="5"/>
+                      <gridX value="9"/>
+                      <gridY value="9"/>
                     </properties>
                   </component>
                 </children>
@@ -146,11 +151,12 @@
                       </grid>
                     </constraints>
                     <properties>
+                      <autoModeX value="false"/>
                       <boundRoundingXEnabled value="true"/>
                       <boundRoundingYEnabled value="true"/>
                       <extraAmount value="0.0"/>
-                      <gridX value="5"/>
-                      <gridY value="5"/>
+                      <gridX value="9"/>
+                      <gridY value="9"/>
                     </properties>
                   </component>
                 </children>
