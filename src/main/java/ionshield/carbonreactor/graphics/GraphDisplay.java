@@ -2,6 +2,7 @@ package ionshield.carbonreactor.graphics;
 
 import ionshield.carbonreactor.math.InterpolationException;
 import ionshield.carbonreactor.math.Interpolator;
+import ionshield.carbonreactor.math.LineDouble;
 import ionshield.carbonreactor.math.PointDouble;
 
 import javax.swing.*;
@@ -42,12 +43,20 @@ public class GraphDisplay extends JPanel {
     private Color[] graphHighlightColors = new Color[] {
             new Color(0x00ffff),
     };
-    
+
     private Color[] pointColors = new Color[] {
             Color.YELLOW
     };
     private Color[] pointHighlightColors = new Color[] {
             Color.GREEN
+    };
+
+    private Color[] lineColors = new Color[] {
+            Color.GREEN
+    };
+
+    private Color[] lineHighlightColors = new Color[] {
+            Color.MAGENTA
     };
     
     private int pointSize = 1;
@@ -58,6 +67,8 @@ public class GraphDisplay extends JPanel {
     private List<Interpolator> interpolatorsHighlighted = new ArrayList<>();
     private List<PointDouble> points = new ArrayList<>();
     private List<PointDouble> pointsHighlighted = new ArrayList<>();
+    private List<LineDouble> lines = new ArrayList<>();
+    private List<LineDouble> linesHighlighted= new ArrayList<>();
     
     private double lowerX = 0;
     private double upperX = 0;
@@ -76,6 +87,7 @@ public class GraphDisplay extends JPanel {
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
+        checkForNull();
         calculateBounds();
         
         drawGrid(g);
@@ -86,8 +98,30 @@ public class GraphDisplay extends JPanel {
             drawGraph(g, interpolatorsHighlighted.get(i), graphHighlightColors[i % graphHighlightColors.length]);
         }
         drawPoints(g);
-        if (upperX != lowerX && upperY != lowerY && interpolatorCount() + pointCount() > 0) {
+        drawLines(g);
+        if (upperX != lowerX && upperY != lowerY && interpolatorCount() + pointCount() + lineCount() > 0) {
             drawValues(g);
+        }
+    }
+
+    private void checkForNull() {
+        if (interpolators == null) {
+            interpolators = new ArrayList<>();
+        }
+        if (interpolatorsHighlighted == null) {
+            interpolatorsHighlighted = new ArrayList<>();
+        }
+        if (points == null) {
+            points = new ArrayList<>();
+        }
+        if (pointsHighlighted == null) {
+            pointsHighlighted = new ArrayList<>();
+        }
+        if (lines == null) {
+            lines = new ArrayList<>();
+        }
+        if (linesHighlighted == null) {
+            linesHighlighted = new ArrayList<>();
         }
     }
     
@@ -97,6 +131,10 @@ public class GraphDisplay extends JPanel {
     
     public int pointCount() {
         return points.size() + pointsHighlighted.size();
+    }
+
+    public int lineCount() {
+        return lines.size() + linesHighlighted.size();
     }
     
     private void drawPoints(Graphics g) {
@@ -109,6 +147,22 @@ public class GraphDisplay extends JPanel {
             g.setColor(pointHighlightColors[i % pointHighlightColors.length]);
             PointDouble p = valueToGraph(pointsHighlighted.get(i));
             g.drawOval((int)Math.round(p.getX()) - pointSize / 2, (int)Math.round(p.getY()) - pointSize / 2, pointSize, pointSize);
+        }
+    }
+
+    private void drawLines(Graphics g) {
+        for (int i = 0; i < lines.size(); i++) {
+            Color color = (lineColors[i % lineColors.length]);
+            PointDouble start = valueToGraph(lines.get(i).a);
+            PointDouble end = valueToGraph(lines.get(i).b);
+            GraphUtils.drawLine(new GraphUtils.Line((int)Math.round(start.getX()), (int)Math.round(start.getY()), (int)Math.round(end.getX()), (int)Math.round(end.getY())), g, color);
+        }
+
+        for (int i = 0; i < linesHighlighted.size(); i++) {
+            Color color = (lineHighlightColors[i % lineHighlightColors.length]);
+            PointDouble start = valueToGraph(linesHighlighted.get(i).a);
+            PointDouble end = valueToGraph(linesHighlighted.get(i).b);
+            GraphUtils.drawLine(new GraphUtils.Line((int)Math.round(start.getX()), (int)Math.round(start.getY()), (int)Math.round(end.getX()), (int)Math.round(end.getY())), g, color);
         }
     }
     
@@ -282,7 +336,23 @@ public class GraphDisplay extends JPanel {
     public void setPointsHighlighted(List<PointDouble> pointsHighlighted) {
         this.pointsHighlighted = pointsHighlighted;
     }
-    
+
+    public List<LineDouble> getLines() {
+        return lines;
+    }
+
+    public void setLines(List<LineDouble> lines) {
+        this.lines = lines;
+    }
+
+    public List<LineDouble> getLinesHighlighted() {
+        return linesHighlighted;
+    }
+
+    public void setLinesHighlighted(List<LineDouble> linesHighlighted) {
+        this.linesHighlighted = linesHighlighted;
+    }
+
     private void calculateBounds() {
         if (interpolators == null) {
             interpolators = new ArrayList<>();
@@ -303,16 +373,29 @@ public class GraphDisplay extends JPanel {
     
         List<PointDouble> allP = new ArrayList<>(points);
         allP.addAll(pointsHighlighted);
-        
+
+        if (lines == null) {
+            lines = new ArrayList<>();
+        }
+        if (linesHighlighted != null) {
+            linesHighlighted = new ArrayList<>();
+        }
+
+        List<LineDouble> allL = new ArrayList<>(lines);
+        allL.addAll(linesHighlighted);
+
         if (autoModeX) {
             double lowerX = all.stream().map(Interpolator::lower).min(Comparator.naturalOrder()).orElse(+Double.MAX_VALUE);
             double upperX = all.stream().map(Interpolator::upper).max(Comparator.naturalOrder()).orElse(-Double.MAX_VALUE);
     
             double lowerXp = allP.stream().map(PointDouble::getX).min(Comparator.naturalOrder()).orElse(+Double.MAX_VALUE);
             double upperXp = allP.stream().map(PointDouble::getX).max(Comparator.naturalOrder()).orElse(-Double.MAX_VALUE);
+
+            double lowerXl = allL.stream().map(LineDouble::minX).min(Comparator.naturalOrder()).orElse(+Double.MAX_VALUE);
+            double upperXl = allL.stream().map(LineDouble::maxX).max(Comparator.naturalOrder()).orElse(-Double.MAX_VALUE);
     
-            this.lowerX = Math.min(lowerX, lowerXp);
-            this.upperX = Math.max(upperX, upperXp);
+            this.lowerX = Math.min(lowerX, Math.min(lowerXp, lowerXl));
+            this.upperX = Math.max(upperX, Math.max(upperXp, upperXl));
         }
         else {
             this.lowerX = minX;
@@ -325,9 +408,12 @@ public class GraphDisplay extends JPanel {
             
             double lowerYp = allP.stream().map(PointDouble::getY).min(Comparator.naturalOrder()).orElse(+Double.MAX_VALUE);
             double upperYp = allP.stream().map(PointDouble::getY).max(Comparator.naturalOrder()).orElse(-Double.MAX_VALUE);
+
+            double lowerYl = allL.stream().map(LineDouble::minY).min(Comparator.naturalOrder()).orElse(+Double.MAX_VALUE);
+            double upperYl = allL.stream().map(LineDouble::maxY).max(Comparator.naturalOrder()).orElse(-Double.MAX_VALUE);
     
-            this.lowerY = Math.min(lowerY, lowerYp);
-            this.upperY = Math.max(upperY, upperYp);
+            this.lowerY = Math.min(lowerY, Math.min(lowerYp, lowerYl));
+            this.upperY = Math.max(upperY, Math.max(upperYp, upperYl));
         }
         else {
             this.lowerY = minY;
@@ -453,7 +539,23 @@ public class GraphDisplay extends JPanel {
     public void setPointSize(int pointSize) {
         this.pointSize = pointSize;
     }
-    
+
+    public Color[] getLineColors() {
+        return lineColors;
+    }
+
+    public void setLineColors(Color[] lineColors) {
+        this.lineColors = lineColors;
+    }
+
+    public Color[] getLineHighlightColors() {
+        return lineHighlightColors;
+    }
+
+    public void setLineHighlightColors(Color[] lineHighlightColors) {
+        this.lineHighlightColors = lineHighlightColors;
+    }
+
     public int getPrecision() {
         return precision;
     }
