@@ -1,7 +1,9 @@
 package ionshield.carbonreactor.core;
 
 import com.bulenkov.darcula.DarculaLaf;
+import ionshield.carbonreactor.graphics.ContourGraphDisplay;
 import ionshield.carbonreactor.graphics.GraphDisplay;
+import ionshield.carbonreactor.graphics.GraphUtils;
 import ionshield.carbonreactor.math.*;
 
 import javax.swing.*;
@@ -10,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.BiFunction;
 
 public class MainWindow {
     private JPanel rootPanel;
@@ -31,6 +34,19 @@ public class MainWindow {
     private GraphDisplay graph1;
     private GraphDisplay graph3;
     private GraphDisplay graph4;
+    private ContourGraphDisplay contourGraphDisplay1;
+    private JCheckBox optimizeCheckBox;
+    private JTextField minVField;
+    private JTextField maxVField;
+    private JTextField minTField;
+    private JTextField maxTField;
+    private JTextField seedField;
+    private JTextField multiField;
+    private JTextField modField;
+    private JTextField m0Field;
+    private JTextField s0Field;
+    private JTextField a0Field;
+    private JCheckBox randomizeCheckBox;
 
     private GraphDisplay[] graphs = new GraphDisplay[] {};
 
@@ -61,7 +77,7 @@ public class MainWindow {
             double time = Double.parseDouble(timeField.getText());
             double deltaTime = Double.parseDouble(deltaTimeField.getText());
             
-            int steps = Math.min((int)Math.round(time / deltaTime), 1000000);
+            int steps = Math.min((int)Math.round(time / deltaTime), 10000000);
             
             CarbonReactor reactor = new CarbonReactor();
             Interpolator[] result = new Interpolator[5];
@@ -84,7 +100,7 @@ public class MainWindow {
             points3.add(new PointDouble(0, reactor.getcC3H4()));
             points4.add(new PointDouble(0, reactor.getcO2()));
             
-            for (int i = 0; i <= steps; i++) {
+            for (int i = 0; i < steps; i++) {
                 reactor.tick(deltaTime, cCH4, cC3H4, cO2, tIn);
                 
                 double currTime = reactor.getTime();
@@ -111,6 +127,50 @@ public class MainWindow {
             result[4] = new LinearInterpolator(points4);
             
             updateGraphs(result, 0, time);
+            if (optimizeCheckBox.isSelected()) {
+                double minV = Double.parseDouble(minVField.getText());
+                double maxV = Double.parseDouble(maxVField.getText());
+                double minT = Double.parseDouble(minTField.getText());
+                double maxT = Double.parseDouble(maxTField.getText());
+
+                BiFunction<Double, Double, Double> function = (vol, temp) -> {
+                    CarbonReactor rc = new CarbonReactor();
+                    rc.init(cCH4, cC3H4, cO2, vol, temp);
+                    for (int i = 0; i < steps; i++) {
+                        rc.tick(deltaTime, cCH4, cC3H4, cO2, temp);
+                    }
+                    return -rc.getcC();
+                };
+
+                Solver solver = new HookeJeevesSolver();
+                solver.setF(function);
+
+                List<BiFunction<Double, Double, Double>> limits = new ArrayList<>();
+                limits.add((x, y) -> x - minV);
+                limits.add((x, y) -> maxV - x);
+                limits.add((x, y) -> y - minT);
+                limits.add((x, y) -> maxT - y);
+
+                PenaltyAdjuster pa = new PenaltyAdjuster(solver, PenaltyAdjuster.QUADRATIC_PENALTY_FUNCTION, limits, new ArrayList<>(), true);
+
+                PointDouble res = pa.solve(new PointDouble(v, tIn), new PointDouble(0.5, 40));
+
+                log.append("\nOptimized params V and tIn: " + res.toString(6) + "\n");
+                log.append("Result: " + GraphUtils.roundDouble(-function.apply(res.getX(), res.getY()), 6, 10, true) + " mol/m^3");
+
+                contourGraphDisplay1.setPoints(pa.getPoints());
+                contourGraphDisplay1.setLines(pa.getLines());
+
+                contourGraphDisplay1.setLowerX(minV);
+                contourGraphDisplay1.setUpperX(maxV);
+                contourGraphDisplay1.setLowerY(minT);
+                contourGraphDisplay1.setUpperY(maxT);
+                contourGraphDisplay1.setUpperZ(+Double.MAX_VALUE);
+                contourGraphDisplay1.setLowerZ(-Double.MAX_VALUE);
+                contourGraphDisplay1.setResolution(30);
+                contourGraphDisplay1.setFunction(function);
+                contourGraphDisplay1.repaint();
+            }
         }
         catch (NumberFormatException e) {
             log.append("\nInvalid input format");
