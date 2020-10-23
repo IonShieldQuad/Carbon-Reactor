@@ -8,10 +8,7 @@ import ionshield.carbonreactor.math.*;
 
 import javax.swing.*;
 import javax.swing.plaf.basic.BasicLookAndFeel;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.function.BiFunction;
 
 public class MainWindow {
@@ -76,9 +73,37 @@ public class MainWindow {
     
             double time = Double.parseDouble(timeField.getText());
             double deltaTime = Double.parseDouble(deltaTimeField.getText());
-            
+
+            long seed;
+            long multi;
+            long mod;
+            double m0 = 0, s0 = 0, a0 = 0;
+            List<Double> rowX = new ArrayList<>();
+            List<Double> rowZ = new ArrayList<>();
+
             int steps = Math.min((int)Math.round(time / deltaTime), 10000000);
-            
+
+            if (randomizeCheckBox.isSelected()) {
+                seed = Long.parseLong(seedField.getText());
+                multi = Long.parseLong(multiField.getText());
+                mod = Long.parseLong(modField.getText());
+                m0 = Double.parseDouble(m0Field.getText());
+                s0 = Double.parseDouble(s0Field.getText());
+                a0 = Double.parseDouble(a0Field.getText());
+
+                RNG<Double> rng = new CongruentialRNG(seed, multi, mod);
+                //Random random = new Random(seed);
+                RandomProcessGenerator rpg = new RandomProcessGenerator(m0, s0, a0, rowX);
+                while (rowX.size() < steps * rpg.getnS()) {
+                    rowX.add(rng.getInRange(-0.5, 0.5));
+                    //rowX.add(random.nextDouble() - 0.5);
+                }
+                for (int i = 0; i < steps; i++) {
+                    double val = rpg.getZ(i + 1);
+                    rowZ.add(val);
+                }
+            }
+
             CarbonReactor reactor = new CarbonReactor();
             Interpolator[] result = new Interpolator[5];
             
@@ -92,7 +117,7 @@ public class MainWindow {
             double cC3H4 = reactor.concentrationInMolesPerCubicMeter(cC3H4Fraction, reactor.getmC3H4());
             double cO2 = reactor.concentrationInMolesPerCubicMeter(cO2Fraction, reactor.getmO2());
     
-            reactor.init(cCH4, cC3H4, cO2, v, tIn);
+            reactor.init(randomizeCheckBox.isSelected() ? m0 : cCH4, cC3H4, cO2, v, tIn);
             
             points0.add(new PointDouble(0, reactor.getcC()));
             points1.add(new PointDouble(0, reactor.getQ() / (reactor.getVolume() * reactor.getDensity() * reactor.getCt())));
@@ -101,7 +126,7 @@ public class MainWindow {
             points4.add(new PointDouble(0, reactor.getcO2()));
             
             for (int i = 0; i < steps; i++) {
-                reactor.tick(deltaTime, cCH4, cC3H4, cO2, tIn);
+                reactor.tick(deltaTime, randomizeCheckBox.isSelected() ? rowZ.get(i) : cCH4, cC3H4, cO2, tIn);
                 
                 double currTime = reactor.getTime();
     
